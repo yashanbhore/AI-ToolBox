@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 import axios from "axios";
-import { BotIcon, MessageSquare } from "lucide-react";
+import { BotIcon, Music } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,9 +22,9 @@ import { Loader } from "@/components/loader";
 import { UserAvatar } from "@/components/user-avatar";
 
 
-const ConversationPage = () => {
+const ImagePage = () => {
   const router = useRouter();
-  const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+  const [music, setMusic] = useState<string>();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,11 +37,12 @@ const ConversationPage = () => {
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const userMessage: ChatCompletionRequestMessage = { role: "user", content: values.prompt };
-      const newMessages = [...messages, userMessage];
-      
-      const response = await axios.post('/api/conversation', { messages: newMessages });
-      setMessages((current) => [...current, userMessage, response.data]);
+      setMusic(undefined);
+
+      const response = await axios.post('/api/music', values);
+      console.log(response)
+
+      setMusic(response.data.audio);
       
       form.reset();
     } catch (error: any) {
@@ -54,11 +55,11 @@ const ConversationPage = () => {
   return ( 
     <div>
       <Heading
-        title="Conversation"
-        description="Our most advanced conversation model."
-        icon={MessageSquare}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Music Generation"
+        description="Text-to-Music."
+        icon={Music}
+        iconColor="text-emerald-500"
+        bgColor="bg-emerald-500/10"
       />
       <div className="px-4 lg:px-8">
         <div>
@@ -86,7 +87,7 @@ const ConversationPage = () => {
                       <Input
                         className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                         disabled={isLoading} 
-                        placeholder="How do I calculate the radius of a circle?" 
+                        placeholder="Music" 
                         {...field}
                       />
                     </FormControl>
@@ -101,29 +102,20 @@ const ConversationPage = () => {
         </div>
         <div className="space-y-4 mt-4">
           {isLoading && (
-            <div className="p-8 rounded-lg w-full flex item-center justify-center bg-muted">
-              <Loader/>
-            </div>
-          )}
-              {messages.length===0 && !isLoading &&(
-                <Empty label="Ghari Jaa"/>
-              )}
-          
-          <div className="flex flex-col-reverse gap-y-4">
-            {messages.map((message) => (
-              <div 
-                key={message.content} 
-                className={cn(
-                  "p-8 w-full flex items-start gap-x-8 rounded-lg",
-                  message.role === "user" ? "bg-white border border-black/10" : "bg-muted",
-                )}
-              >
-                {message.role==="user" ? <UserAvatar/>: <BotIcon/>}
-                <p>
-                  {message.content}
-                </p>
-              </div>
-            ))}
+          <div className="p-20">
+            <Loader />
+          </div>
+        )}
+        {!music && !isLoading && (
+          <Empty label="No music generated." />
+        )}
+        {music && (
+          <audio controls className="w-full mt-8">
+            <source src={music} />
+          </audio>
+        )}
+          <div>
+
           </div>
         </div>
       </div>
@@ -131,4 +123,4 @@ const ConversationPage = () => {
    );
 }
  
-export default ConversationPage;
+export default ImagePage;
